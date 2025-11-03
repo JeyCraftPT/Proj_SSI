@@ -1,4 +1,7 @@
 # https://pycryptodome.readthedocs.io/en/latest/src/examples.html#encrypt-data-with-aes
+# pip install pycryptodome
+# ------------------------------------------------------------- #   
+
 
 # encrypt and decrypt with authentication using AES and HMAC
 
