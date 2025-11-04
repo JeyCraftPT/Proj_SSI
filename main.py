@@ -8,45 +8,50 @@
 from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+import sys
 
 data = "secret data to transmit".encode()
 
-key = get_random_bytes(16)  # AES-
+key = get_random_bytes(16)  # AES-128 key
 hmac_key = get_random_bytes(16)  # HMAC key
 
+# create cipher, pad data to AES block size, and get IV
 cipher = AES.new(key, AES.MODE_CBC)
-ciphertext = cipher.encrypt(data)
+iv = cipher.iv
+ciphertext = cipher.encrypt(pad(data, AES.block_size))
 
-hmac = HMAC.new(hmac_key,digestmod=SHA256)
-tag = hmac.update(cipher.nonce + ciphertextt).digest()
+# compute HMAC over iv + ciphertext and get the digest
+hmac = HMAC.new(hmac_key, digestmod=SHA256)
+hmac.update(iv + ciphertext)
+tag = hmac.digest()
 
 with open("output.bin", "wb") as f:
     f.write(tag)
-    f.write(cipher.nonce)
+    f.write(iv)
     f.write(ciphertext)
 
 # ------------------------------------------------------------- #
 
-import sys
 from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 
 with open("output.bin", "rb") as f:
     tag = f.read(32)  # SHA256 produces a 32-byte tag
-    nonce = f.read(16)  # AES block size is 16 bytes
+    iv = f.read(16)  # AES block size is 16 bytes
     ciphertext = f.read()
 
 try:
-    hmac = HMAC.new(hmac_key,digestmod=SHA256)
-    hmac.update(nonce + ciphertext)
+    hmac = HMAC.new(hmac_key, digestmod=SHA256)
+    hmac.update(iv + ciphertext)
     hmac.verify(tag)
     print("HMAC verification succeeded.")
 except ValueError:
     print("HMAC verification failed.")
     sys.exit(1)
 
-cipher = AES.new(key, AES.MODE_CBC, nonce=nonce)
-message = cipher.decrypt(ciphertext)
+cipher = AES.new(key, AES.MODE_CBC, iv=iv)
+message = unpad(cipher.decrypt(ciphertext), AES.block_size)
 print("Decrypted message:", message.decode())
 
 # ------------------------------------------------------------- #
@@ -59,13 +64,13 @@ from Crypto.PublicKey import RSA
 secret_code = "Unguessable"
 key = RSA.generate(2048)
 
-encrypted_key = key,export_key(passphrase=secret_code, pkcs=8,
-                               protection="scryptAndAES128-CBC"
-                               prot_params={'interation_count':131072})
+# export private key encrypted with a passphrase
+encrypted_key = key.export_key(passphrase=secret_code, pkcs=8, protection="scryptAndAES128-CBC")
 with open("private.pem", "wb") as f:
     f.write(encrypted_key)
 
-print(key,publickey().export_key())
+# print public key
+print(key.publickey().export_key())
 
 # ------------------------------------------------------------- #
 
@@ -75,5 +80,5 @@ secret_code = "Unguessable"
 encoded_key = open("private.pem", "rb").read()
 key = RSA.import_key(encoded_key, passphrase=secret_code)
 
-print(key.public_key().export_key())
+print(key.publickey().export_key())
 
