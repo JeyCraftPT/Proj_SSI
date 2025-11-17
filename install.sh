@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create's a local venv
-python3 -m venv enaben
+python3 -m venv inaben
 # Activate venv (optimize to detect shell)
 if ["echo $SHELL" = "usr/bin/fish"] ; then 
 	source enaben/bin/activate.fish
