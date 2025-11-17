@@ -3,12 +3,12 @@
 # Create's a local venv
 python3 -m venv inaben
 # Activate venv (optimize to detect shell)
-if ["echo $SHELL" = "usr/bin/fish"] ; then 
+if ["echo $SHELL" = "/usr/bin/fish"] ; then 
 	source enaben/bin/activate.fish
-elif [ "echo$SHELL" = "/bin/bash" ]; then
+elif [ "echo$SHELL" = "/usr/bin/bash" ]; then
   source enaben/bin/activate
-elif [ "echo $SHELL" = "/bin/zsh" ]; then
-  source enaben/bin/activate.zsh
+elif [ "echo $SHELL" = "/usr/bin/zsh" ]; then
+  source enaben/bin/activate
 else
   echo "Unsupported shell: $SHELL"
 fi
