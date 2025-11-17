@@ -4,11 +4,11 @@
 python3 -m venv inaben
 # Activate venv (optimize to detect shell)
 if ["echo $SHELL" = "/usr/bin/fish"] ; then 
-	source enaben/bin/activate.fish
+	source inaben/bin/activate.fish
 elif [ "echo$SHELL" = "/usr/bin/bash" ]; then
-  source enaben/bin/activate
+  source inaben/bin/activate
 elif [ "echo $SHELL" = "/usr/bin/zsh" ]; then
-  source enaben/bin/activate
+  source inaben/bin/activate
 else
   echo "Unsupported shell: $SHELL"
 fi
