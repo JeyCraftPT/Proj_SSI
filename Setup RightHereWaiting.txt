@@ -1,0 +1,19 @@
+Formal Name [Hello World]: RightHereWaiting
+
+App Name [rightherewaiting]:
+
+Bundle Identifier [com.example]: com.rightherewaiting.rightHereWaiting
+
+Project Name [RightHereWaiting]:
+
+Description [My first application]: SSI Project
+
+Author [Jane Developer]: Group C
+
+Author's Email [group@rightHereWaiting.rightherewaiting.com]:
+
+Application URL [https://rightHereWaiting.rightherewaiting.com/rightherewaiting]:
+
+Project License [1]: 2
+
+GUI Framework [1]: 1
