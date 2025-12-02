@@ -28,7 +28,8 @@ def initializeDB ():
                         user_id INTEGER NOT NULL,
                         public_key TEXT NOT NULL,
                         private_key_path TEXT NOT NULL,
-                        pk_name TEXT NOT NULL, 
+                        pk_name TEXT NOT NULL,
+                        signature TEXT NOT NULL,
                         FOREIGN KEY (user_id) REFERENCES users(id)
                         );""")
     
