@@ -22,4 +22,3 @@ esac
 
 # install dependencies used in development of this project
 pip install briefcase
-
