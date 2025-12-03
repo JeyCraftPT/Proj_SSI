@@ -1,7 +1,9 @@
 #!/bin/bash
 
+cd rightHereWaiting
+
 # Create a local venv
-python3 -m venv inaben
+python3 -m venv rightHereWaiting
 
 # Detect shell and activate venv
 case "$SHELL" in
