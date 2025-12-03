@@ -6,13 +6,13 @@ python3 -m venv inaben
 # Detect shell and activate venv
 case "$SHELL" in
 */fish)
-  source inaben/bin/activate.fish
+  source rightHereWaiting/rightHereWaiting/bin/activate
   ;;
 */bash)
-  source inaben/bin/activate
+  source rightHereWaiting/rightHereWaiting/bin/activate
   ;;
 */zsh)
-  source inaben/bin/activate
+  source rightHereWaiting/rightHereWaiting/bin/activate
   ;;
 *)
   echo "Unsupported shell: $SHELL"
