@@ -3,27 +3,37 @@
 project_name = "rightHereWaiting"
 bundle = "com.example"
 version = "0.0.1"
-url = "https://example.com/rightHereWaiting"
+url = "https://example.com/rightherewaiting"
 license.file = "LICENSE"
-author = "Vass"
-author_email = "sarumankeeb@gmail.com"
+author = "João Pinto"
+author_email = "joaoduartelopi@gmail.com"
 
-[tool.briefcase.app.rightHereWaiting]
+[tool.briefcase.app.rightherewaiting]
 formal_name = "rightHereWaiting"
-description = "Application to save and sign documents"
+description = "My first application"
 long_description = """More details about the app should go here.
 """
-sources = ["src/rightHereWaiting"]
-test_sources = ["tests"]
+sources = [
+    "src/rightherewaiting",
+]
+test_sources = [
+    "tests",
+]
 
-requires = ["faker", "httpx"]
-test_requires = ["pytest"]
+requires = [
+]
+test_requires = [
+    "pytest",
+]
 
-[tool.briefcase.app.rightHereWaiting.macOS]
+[tool.briefcase.app.rightherewaiting.macOS]
 universal_build = true
-requires = ["toga-cocoa~=0.5.0", "std-nslog~=1.0.3"]
+requires = [
+    "toga-cocoa~=0.5.0",
+    "std-nslog~=1.0.3",
+]
 
-[tool.briefcase.app.rightHereWaiting.linux]
+[tool.briefcase.app.rightherewaiting.linux]
 requires = [
     "toga-gtk~=0.5.0",
     # PyGObject 3.52.1 enforces a requirement on libgirepository-2.0-dev. This library
@@ -32,7 +42,7 @@ requires = [
     "pygobject < 3.52.1",
 ]
 
-[tool.briefcase.app.rightHereWaiting.linux.system.debian]
+[tool.briefcase.app.rightherewaiting.linux.system.debian]
 system_requires = [
     # Needed to compile pycairo wheel
     "libcairo2-dev",
@@ -58,7 +68,7 @@ system_runtime_requires = [
     # "gir1.2-webkit2-4.1",
 ]
 
-[tool.briefcase.app.rightHereWaiting.linux.system.rhel]
+[tool.briefcase.app.rightherewaiting.linux.system.rhel]
 system_requires = [
     # Needed to compile pycairo wheel
     "cairo-gobject-devel",
@@ -77,7 +87,7 @@ system_runtime_requires = [
     # "webkit2gtk3",
 ]
 
-[tool.briefcase.app.rightHereWaiting.linux.system.suse]
+[tool.briefcase.app.rightherewaiting.linux.system.suse]
 system_requires = [
     # Needed to compile pycairo wheel
     "cairo-devel",
@@ -89,15 +99,14 @@ system_runtime_requires = [
     # Needed to provide GTK
     "gtk3",
     # Needed to support Python bindings to GTK
-    "gobject-introspection",
-    "typelib(Gtk) = 3.0",
+    "gobject-introspection", "typelib(Gtk) = 3.0",
     # Dependencies that GTK looks for at runtime
     "libcanberra-gtk3-module",
     # Needed to provide WebKit2 at runtime
     # "libwebkit2gtk3", "typelib(WebKit2)",
 ]
 
-[tool.briefcase.app.rightHereWaiting.linux.system.arch]
+[tool.briefcase.app.rightherewaiting.linux.system.arch]
 system_requires = [
     # Needed to compile pycairo wheel
     "cairo",
@@ -124,7 +133,7 @@ system_runtime_requires = [
     # "webkit2gtk",
 ]
 
-[tool.briefcase.app.rightHereWaiting.linux.appimage]
+[tool.briefcase.app.rightherewaiting.linux.appimage]
 manylinux = "manylinux_2_28"
 
 system_requires = [
@@ -141,22 +150,31 @@ system_requires = [
     "gvfs-client",
 ]
 
-linuxdeploy_plugins = ["DEPLOY_GTK_VERSION=3 gtk"]
+linuxdeploy_plugins = [
+    "DEPLOY_GTK_VERSION=3 gtk",
+]
 
-[tool.briefcase.app.rightHereWaiting.linux.flatpak]
+[tool.briefcase.app.rightherewaiting.linux.flatpak]
 flatpak_runtime = "org.gnome.Platform"
 flatpak_runtime_version = "48"
 flatpak_sdk = "org.gnome.Sdk"
 
-[tool.briefcase.app.rightHereWaiting.windows]
-requires = ["toga-winforms~=0.5.0"]
+[tool.briefcase.app.rightherewaiting.windows]
+requires = [
+    "toga-winforms~=0.5.0",
+]
 
 # Mobile deployments
-[tool.briefcase.app.rightHereWaiting.iOS]
-requires = ["toga-iOS~=0.5.0", "std-nslog~=1.0.3"]
+[tool.briefcase.app.rightherewaiting.iOS]
+requires = [
+    "toga-iOS~=0.5.0",
+    "std-nslog~=1.0.3",
+]
 
-[tool.briefcase.app.rightHereWaiting.android]
-requires = ["toga-android~=0.5.0"]
+[tool.briefcase.app.rightherewaiting.android]
+requires = [
+    "toga-android~=0.5.0",
+]
 
 base_theme = "Theme.MaterialComponents.Light.DarkActionBar"
 
@@ -169,6 +187,9 @@ build_gradle_dependencies = [
 ]
 
 # Web deployments
-[tool.briefcase.app.rightHereWaiting.web]
-requires = ["toga-web~=0.5.0"]
+[tool.briefcase.app.rightherewaiting.web]
+requires = [
+    "toga-web~=0.5.0",
+]
 style_framework = "Shoelace v2.3"
+
