@@ -134,7 +134,7 @@ class MainScreen(Screen):
                     yield Button("Encrypt File & Gen Key", id="btn-encrypt", variant="primary", classes="action-btn")
                     
                     yield Label("Output Key (Save this!):", id="key-output-label")
-                    yield Input(readonly=True, id="key-output-display")
+                    yield Input(id="key-output-display")
 
             # TAB 3: DECRYPTION & INTEGRITY
             with TabPane("Decryption"):
