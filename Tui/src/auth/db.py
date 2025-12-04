@@ -1,15 +1,15 @@
 import sqlite3
+import os
 
-path_DB = "rightHereWaiting.db"
+# Ensure data directory exists
+os.makedirs("data", exist_ok=True)
+path_DB = "data/users.db"
 
-
-def connectDB ():
+def connectDB():
     return sqlite3.connect(path_DB)
 
-
-def initializeDB ():
-
-    connection = connectDB
+def initializeDB():
+    connection = connectDB()
     cursor = connection.cursor()
 
     cursor.execute(""" CREATE TABLE IF NOT EXISTS users (
@@ -22,7 +22,6 @@ def initializeDB ():
                         passwordD_hash TEXT NOT NULL
                         );""")
     
-
     cursor.execute(""" CREATE TABLE IF NOT EXISTS signatures (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         user_id INTEGER NOT NULL,
@@ -32,7 +31,6 @@ def initializeDB ():
                         signature TEXT NOT NULL,
                         FOREIGN KEY (user_id) REFERENCES users(id)
                         );""")
-    
     
     cursor.execute(""" CREATE TABLE IF NOT EXISTS enc_files (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
