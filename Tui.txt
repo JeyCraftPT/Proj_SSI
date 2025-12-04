@@ -1,0 +1,5 @@
+Para correr o Tui
+entrar na pasta Tui
+dar pip install ao que está na pasta req.txt
+e fazer python -m src.main
+functiona para mim e para o pedro
