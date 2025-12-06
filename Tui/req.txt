@@ -1,1 +1,2 @@
 pip install textual textual-dev
+pip install pycryptodome
