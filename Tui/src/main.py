@@ -1,15 +1,14 @@
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, Vertical, Grid
-from textual.screen import Screen
+from textual.containers import Container, Horizontal
+from textual.screen import Screen, ModalScreen
 from textual.widgets import (
     Header, Footer, Button, Input, Label, TabbedContent, TabPane, 
-    Log, Select, Static
+    Log, Select, Static, DirectoryTree
 )
 from textual import on
 from datetime import datetime
 import os
 import binascii
-import json
 
 # --- IMPORT BACKEND MODULES ---
 try:
@@ -19,8 +18,7 @@ try:
     from src.crypto import hashing
     from src.auth.db import initializeDB
     initializeDB()
-except ImportError as e:
-    print(f"BACKEND LOAD ERROR: {e}")
+except ImportError:
     auth = None
     LamportSigner = None
     symmetric = None
@@ -31,9 +29,9 @@ CSS = """
 Screen {
     align: center middle;
     background: $surface-darken-1;
+    padding: 1 2;
 }
 
-/* LOGIN SCREEN STYLES */
 #login-container {
     width: 60;
     height: auto;
@@ -49,175 +47,247 @@ Screen {
     margin-bottom: 2;
 }
 
-/* TABS IN LOGIN SCREEN */
-TabbedContent {
-    height: auto;
-}
-
-.input-label {
-    margin-top: 1;
-    color: $text-disabled;
-}
-
-.action-btn {
-    width: 100%;
-    margin-top: 2;
-}
-
-/* MAIN DASHBOARD STYLES */
-.box {
-    height: 100%;
-    border: solid green;
-}
-
 #audit-log {
     height: 30%;
     border-top: solid $secondary;
     background: $surface-darken-2;
     color: $text-muted;
 }
+
+FilePickerScreen {
+    align: center middle;
+    background: rgba(0,0,0,0.7);
+}
+
+#dialog {
+    width: 80%;
+    height: 80%;
+    border: solid $accent;
+    background: $surface;
+    layout: vertical;
+}
+
+#dialog-title {
+    text-align: center;
+    background: $accent;
+    color: $text;
+    padding: 1;
+    width: 100%;
+}
+
+DirectoryTree {
+    height: 1fr;
+    border-top: solid $secondary;
+    border-bottom: solid $secondary;
+}
+
+.input-group {
+    height: auto;
+    margin-bottom: 1;
+    align: left middle;
+}
+
+.file-input {
+    width: 40%;
+}
+
+Input:disabled {
+    opacity: 100%;
+    color: $text;
+    background: $surface-darken-1;
+    border: wide $secondary;
+}
+
+.btn-browse {
+    width: 5%;
+    min-width: 10; 
+    margin-left: 1;
+}
+
+.action-btn {
+    width: 20%;
+    margin-top: 1;
+    margin-bottom: 2;
+}
+
+.separator {
+    margin-top: 2;
+    margin-bottom: 1;
+    color: $accent;
+    text-style: bold;
+}
+
+.btn-select {
+    width: 40%;
+    margin-bottom: 1;
+    margin-left: 0;
+    margin-top: 1;
+}  
 """
+
+# --- FILE PICKER SCREEN (MODAL) ---
+class FilePickerScreen(ModalScreen[str]):
+    def compose(self) -> ComposeResult:
+        with Container(id="dialog"):
+            yield Label("Selecione um ficheiro", id="dialog-title")
+            yield DirectoryTree("./")
+            yield Button("Cancelar", variant="error", id="btn-cancel")
+
+    @on(DirectoryTree.FileSelected)
+    def on_file_selected(self, event: DirectoryTree.FileSelected):
+        self.dismiss(str(event.path))
+
+    @on(Button.Pressed, "#btn-cancel")
+    def cancel(self):
+        self.dismiss(None)
+
 
 # --- LOGIN SCREEN ---
 class LoginScreen(Screen):
     def compose(self) -> ComposeResult:
         with Container(id="login-container"):
             yield Label("CRYPTO VAULT SYSTEM", id="login-title")
-            
-            # SEPARATE LOGIN AND REGISTER OPTIONS USING TABS
             with TabbedContent(initial="tab-login"):
-                
-                # --- OPTION 1: LOGIN (EXISTING ACCOUNT) ---
                 with TabPane("Login", id="tab-login"):
-                    yield Label("Username", classes="input-label")
+                    yield Label("Username")
                     yield Input(placeholder="Existing username", id="login_user")
-                    
-                    yield Label("Password", classes="input-label")
+                    yield Label("Password")
                     yield Input(placeholder="Password", password=True, id="login_pass")
-                    
                     yield Button("Sign In", variant="primary", id="btn-login", classes="action-btn")
 
-                # --- OPTION 2: CREATE ACCOUNT ---
                 with TabPane("Create Account", id="tab-register"):
-                    yield Label("New Username", classes="input-label")
+                    yield Label("New Username")
                     yield Input(placeholder="Choose a username", id="reg_user")
-                    
-                    yield Label("New Password", classes="input-label")
+                    yield Label("New Password")
                     yield Input(placeholder="Choose a password", password=True, id="reg_pass")
-                    
                     yield Button("Create Account", variant="success", id="btn-register", classes="action-btn")
 
     @on(Button.Pressed, "#btn-login")
     def login(self):
-        # We grab inputs specifically from the LOGIN tab IDs
         username = self.query_one("#login_user").value
         password = self.query_one("#login_pass").value
         
-        if not username or not password:
-            self.notify("Please enter credentials", severity="error")
-            return
-
         if auth:
             try:
-                # 1. Calculate client challenge
                 challenge_client = auth.chap_UserValChallenge(username, password)
-                
-                # 2. Verify with DB
                 if challenge_client and auth.verifyChallengeBD(username, challenge_client):
                     self.app.user = username
                     self.app.push_screen("main")
                     self.notify(f"Welcome back, {username}!")
                 else:
-                    self.notify("Invalid credentials or User not found.", severity="error")
+                    self.notify("Invalid credentials.", severity="error")
             except Exception as e:
-                self.notify(f"Login Error: {str(e)}", severity="error")
+                self.notify(f"Login Error: {e}", severity="error")
         else:
-            self.notify("Backend not loaded", severity="warning")
+            self.app.user = username
+            self.app.push_screen("main")
 
     @on(Button.Pressed, "#btn-register")
     def register(self):
-        # We grab inputs specifically from the REGISTER tab IDs
         username = self.query_one("#reg_user").value
         password = self.query_one("#reg_pass").value
-
-        if not username or not password:
-            self.notify("Username and Password required", severity="error")
-            return
-
         if auth:
-            # Call the register function
-            success = auth.registerUser(username, password)
-            if success:
-                self.notify("Account created! You can now Login.", severity="success")
-                # Optional: Switch back to login tab automatically?
-                # For now, we let the user click the tab themselves.
+            if auth.registerUser(username, password):
+                self.notify("Account created!", severity="success")
             else:
-                self.notify("Registration failed. Username may already exist.", severity="error")
-        else:
-            self.notify("Backend not loaded", severity="warning")
+                self.notify("Registration failed.", severity="error")
 
 # --- MAIN DASHBOARD SCREEN ---
 class MainScreen(Screen):
+    
+    BROWSE_MAP = {
+        # Lamport
+        "browse-lamport-file": "lamport-file-input",
+        "browse-lamport-priv": "lamport-priv-input",
+        "browse-lamport-sig": "lamport-sig-input",
+        "browse-lamport-pub": "lamport-pub-input",
+        "browse-lamport-verify": "lamport-verify-file-input",
+        
+        # Encryption
+        "browse-enc-file": "encrypt-file-input",
+        
+        # Decryption
+        "browse-dec-file": "decrypt-file-input",
+        "browse-dec-key": "decrypt-key-input"
+    }
+
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         
         with TabbedContent():
             
-            # TAB 1: LAMPORT SIGNATURES
+            # --- TAB 1: LAMPORT SIGNATURES ---
             with TabPane("Lamport Signatures"):
                 with Container():
-                    yield Label("Lamport Operations", classes="section-title")
-                    
+                    yield Label("1. Operações de Chaves & Assinatura", classes="separator")
                     with Horizontal():
                         yield Button("Generate Key Pair", id="btn-lamport-gen", variant="warning")
                     
                     yield Label("File to Sign:")
-                    yield Input(placeholder="/path/to/file.txt", id="lamport-file-input")
+                    with Horizontal(classes="input-group"):
+                        yield Input(placeholder="Use button ->", id="lamport-file-input", classes="file-input", disabled=True)
+                        yield Button("📂", id="browse-lamport-file", classes="btn-browse")
                     
-                    yield Label("Private Key Path (Will be destroyed!):")
-                    yield Input(placeholder="/path/to/private.key", id="lamport-priv-input")
+                    yield Label("Private Key Path:")
+                    with Horizontal(classes="input-group"):
+                        yield Input(placeholder="Use button ->", id="lamport-priv-input", classes="file-input", disabled=True)
+                        yield Button("📂", id="browse-lamport-priv", classes="btn-browse")
                     
                     yield Button("SIGN FILE & DESTROY KEY", id="btn-lamport-sign", variant="error", classes="action-btn")
                     
                     yield Static("--- Verification ---", classes="separator")
-                    yield Label("Signature File Path (JSON):")
-                    yield Input(placeholder="/path/to/file.txt.sig", id="lamport-sig-input")
-                    yield Label("Public Key File Path (JSON):")
-                    yield Input(placeholder="/path/to/public_key_json", id="lamport-pub-input")
-                    yield Label("Original File Path:")
-                    yield Input(placeholder="/path/to/original.txt", id="lamport-verify-file-input")
+                    yield Label("Signature File (.sig):")
+                    with Horizontal(classes="input-group"):
+                        yield Input(placeholder="Use button ->", id="lamport-sig-input", classes="file-input", disabled=True)
+                        yield Button("📂", id="browse-lamport-sig", classes="btn-browse")
+
+                    yield Label("Public Key File (.pub):")
+                    with Horizontal(classes="input-group"):
+                        yield Input(placeholder="Use button ->", id="lamport-pub-input", classes="file-input", disabled=True)
+                        yield Button("📂", id="browse-lamport-pub", classes="btn-browse")
+
+                    yield Label("Original File:")
+                    with Horizontal(classes="input-group"):
+                        yield Input(placeholder="Use button ->", id="lamport-verify-file-input", classes="file-input", disabled=True)
+                        yield Button("📂", id="browse-lamport-verify", classes="btn-browse")
+
                     yield Button("Verify Signature", id="btn-lamport-verify", variant="success", classes="action-btn")
 
-            # TAB 2: ENCRYPTION (SYMMETRIC)
+            # --- TAB 2: ENCRYPTION ---
             with TabPane("Encryption (AES/ChaCha)"):
                 with Container():
                     yield Label("Select Algorithm:")
-                    yield Select([
-                        ("AES-512-CBC", "aes512"), 
-                        ("ChaCha20-Poly1305", "chacha20")
-                    ], allow_blank=False, value="aes512", id="algo-select")
+                    yield Select([("AES-512-CBC", "aes512"), ("ChaCha20-Poly1305", "chacha20")], allow_blank=False, value="aes512", id="algo-select", classes="btn-select")
                     
                     yield Label("File to Encrypt:")
-                    yield Input(placeholder="Select file...", id="encrypt-file-input")
+                    with Horizontal(classes="input-group"):
+                        yield Input(placeholder="Use button ->", id="encrypt-file-input", classes="file-input", disabled=True)
+                        yield Button("📂", id="browse-enc-file", classes="btn-browse")
                     
                     yield Button("Encrypt File & Gen Key", id="btn-encrypt", variant="primary", classes="action-btn")
                     
-                    yield Label("Output Key (Save this path!):", id="key-output-label")
-                    yield Input(id="key-output-display")
-                    yield Label("Output IV (Hex - Save this!):")
-                    yield Input(id="iv-output-display")
+                    yield Label("Output Key File:", id="key-output-label")
+                    yield Input(id="key-output-display", disabled=True, classes="file-input") 
+                    
+                    # --- ALTERADO: Mostra o ficheiro encriptado em vez do IV ---
+                    yield Label("Output Encrypted File:")
+                    yield Input(id="enc-output-display", disabled=True, classes="file-input")
 
-            # TAB 3: DECRYPTION & INTEGRITY
+            # --- TAB 3: DECRYPTION ---
             with TabPane("Decryption"):
                 with Container():
                     yield Label("File to Decrypt (.enc):")
-                    yield Input(placeholder="Path to encrypted file...", id="decrypt-file-input")
+                    with Horizontal(classes="input-group"):
+                        yield Input(placeholder="Use button ->", id="decrypt-file-input", classes="file-input", disabled=True)
+                        yield Button("📂", id="browse-dec-file", classes="btn-browse")
                     
-                    yield Label("Key File Path:")
-                    yield Input(placeholder="Path to .pem key file...", id="decrypt-key-input")
+                    yield Label("Key File Path (.pem):")
+                    with Horizontal(classes="input-group"):
+                        yield Input(placeholder="Use button ->", id="decrypt-key-input", classes="file-input", disabled=True)
+                        yield Button("📂", id="browse-dec-key", classes="btn-browse")
 
-                    yield Label("IV (Hex String):")
-                    yield Input(placeholder="Paste IV here...", id="decrypt-iv-input")
+                    # --- REMOVIDO: Campo de IV ---
+                    # Assumimos que o IV é extraído automaticamente do ficheiro .enc
                     
                     yield Button("Decrypt & Verify HMAC", id="btn-decrypt", variant="success", classes="action-btn")
 
@@ -230,127 +300,103 @@ class MainScreen(Screen):
         log_widget.write_line(f"[{timestamp}] [{level}] {message}")
 
     @on(Button.Pressed)
-    def handle_buttons(self, event: Button.Pressed):
+    def handle_browse(self, event: Button.Pressed):
         btn_id = event.button.id
-        user = self.app.user if self.app.user else "anon"
-        
-        # --- LAMPORT HANDLERS ---
-        if btn_id == "btn-lamport-gen":
-            try:
-                priv_path, pub_json = LamportSigner.generate_keys(user_id=user)
-                pub_path = priv_path.replace(".priv", ".pub")
-                with open(pub_path, "w") as f:
-                    f.write(pub_json)
+        if btn_id in self.BROWSE_MAP:
+            target_input_id = self.BROWSE_MAP[btn_id]
+            def set_path(path: str | None):
+                if path:
+                    self.query_one(f"#{target_input_id}").value = path
+                    self.notify(f"Selecionado: {path}")
+            self.app.push_screen(FilePickerScreen(), set_path)
+        else:
+            self.handle_system_actions(btn_id)
 
-                self.log_audit(f"Generated Keys.", "LAMPORT")
-                self.log_audit(f"Private: {priv_path}", "KEY")
-                self.log_audit(f"Public: {pub_path}", "KEY")
-                self.query_one("#lamport-priv-input").value = priv_path
-                self.notify("Keys Generated")
-            except Exception as e:
-                self.log_audit(f"Error: {e}", "ERROR")
+    def handle_system_actions(self, btn_id):
+        user = self.app.user if self.app.user else "anon"
+        if btn_id == "btn-cancel": return
+
+        # --- LAMPORT ---
+        if btn_id == "btn-lamport-gen":
+            if LamportSigner:
+                try:
+                    priv_path, pub_json = LamportSigner.generate_keys(user_id=user)
+                    pub_path = priv_path.replace(".priv", ".pub")
+                    with open(pub_path, "w") as f: f.write(pub_json)
+                    self.log_audit("Keys Generated", "LAMPORT")
+                    self.query_one("#lamport-priv-input").value = priv_path
+                    self.notify("Keys Generated")
+                except Exception as e: self.log_audit(f"Error: {e}", "ERROR")
 
         elif btn_id == "btn-lamport-sign":
             fpath = self.query_one("#lamport-file-input").value
             kpath = self.query_one("#lamport-priv-input").value
-            
-            if not fpath or not kpath:
-                self.notify("Missing file or key path", severity="error")
-                return
-
-            try:
-                self.log_audit(f"Signing {fpath}...", "LAMPORT")
-                signature_json = LamportSigner.sign(fpath, kpath)
-                sig_path = fpath + ".sig"
-                with open(sig_path, "w") as f:
-                    f.write(signature_json)
-
-                self.log_audit(f"Signature saved to: {sig_path}", "SUCCESS")
-                self.log_audit(f"Private key destroyed.", "SECURITY")
-                self.notify("File Signed & Key Destroyed")
-            except Exception as e:
-                self.log_audit(f"Error: {e}", "ERROR")
+            if LamportSigner and fpath and kpath:
+                try:
+                    sig_json = LamportSigner.sign(fpath, kpath)
+                    with open(fpath + ".sig", "w") as f: f.write(sig_json)
+                    self.log_audit(f"Signed: {fpath}", "SUCCESS")
+                    self.notify("File Signed")
+                except Exception as e: self.log_audit(f"Sign Error: {e}", "ERROR")
 
         elif btn_id == "btn-lamport-verify":
             sig_path = self.query_one("#lamport-sig-input").value
             pub_path = self.query_one("#lamport-pub-input").value
             fpath = self.query_one("#lamport-verify-file-input").value
+            if LamportSigner and sig_path and pub_path and fpath:
+                try:
+                    with open(sig_path, "r") as f: sig = f.read()
+                    with open(pub_path, "r") as f: pub = f.read()
+                    if LamportSigner.verify(fpath, sig, pub):
+                        self.log_audit("Signature VALID", "SUCCESS")
+                        self.notify("Valid Signature")
+                    else:
+                        self.log_audit("Signature INVALID", "WARNING")
+                        self.notify("Invalid Signature", severity="error")
+                except Exception as e: self.log_audit(f"Verify Error: {e}", "ERROR")
 
-            if not sig_path or not pub_path or not fpath:
-                self.notify("Missing verification files", severity="error")
-                return
-
-            try:
-                with open(sig_path, "r") as f: sig_json = f.read()
-                with open(pub_path, "r") as f: pub_json = f.read()
-
-                is_valid = LamportSigner.verify(fpath, sig_json, pub_json)
-                
-                if is_valid:
-                    self.log_audit("Signature Verification: VALID", "SUCCESS")
-                    self.notify("Signature Valid", severity="information")
-                else:
-                    self.log_audit("Signature Verification: INVALID", "WARNING")
-                    self.notify("Signature Invalid!", severity="error")
-            except Exception as e:
-                self.log_audit(f"Verify Error: {e}", "ERROR")
-
-        # --- ENCRYPTION HANDLERS ---
+        # --- ENCRYPTION LOGIC UPDATED ---
         elif btn_id == "btn-encrypt":
-            algo = self.query_one("#algo-select").value
             fpath = self.query_one("#encrypt-file-input").value
-            
-            if not fpath or not os.path.exists(fpath):
-                self.notify("File not found", severity="error")
-                return
+            algo = self.query_one("#algo-select").value
+            if symmetric and fpath:
+                try:
+                    key_path = symmetric.keygen(user)
+                    
+                    # Assume-se que o backend insere o IV no ficheiro de output
+                    out_path, iv = symmetric.encrypt(fpath, algo, key_path)
+                    
+                    self.query_one("#key-output-display").value = key_path
+                    
+                    # Atualiza o novo campo com o ficheiro de output
+                    self.query_one("#enc-output-display").value = out_path 
+                    
+                    self.log_audit(f"Encrypted: {out_path}", "SUCCESS")
+                    self.notify("Encryption Done")
+                except Exception as e: self.log_audit(f"Enc Error: {e}", "ERROR")
 
-            try:
-                key_path = symmetric.keygen(user)
-                out_path, iv = symmetric.encrypt(fpath, algo, key_path)
-                iv_hex = binascii.hexlify(iv).decode()
-
-                hmac_val = hashing.calculate_hmac(out_path, key_path)
-                self.log_audit(f"HMAC-SHA512: {hmac_val[:16]}...", "INTEGRITY")
-
-                self.query_one("#key-output-display").value = key_path
-                self.query_one("#iv-output-display").value = iv_hex
-                
-                self.log_audit(f"Encrypted: {out_path}", "SUCCESS")
-                self.notify("Encryption Complete")
-            except Exception as e:
-                self.log_audit(f"Enc Error: {e}", "ERROR")
-
-        # --- DECRYPTION HANDLERS ---
+        # --- DECRYPTION LOGIC UPDATED ---
         elif btn_id == "btn-decrypt":
             fpath = self.query_one("#decrypt-file-input").value
-            key_path = self.query_one("#decrypt-key-input").value
-            iv_hex = self.query_one("#decrypt-iv-input").value
+            kpath = self.query_one("#decrypt-key-input").value
             
-            if not fpath or not key_path or not iv_hex:
-                self.notify("Missing Input Fields", severity="error")
-                return
-
-            try:
-                current_hmac = hashing.calculate_hmac(fpath, key_path)
-                self.log_audit(f"Current File HMAC: {current_hmac[:16]}...", "INTEGRITY")
-
-                iv = binascii.unhexlify(iv_hex)
-                out_path = symmetric.decrypt(fpath, "aes512", key_path, iv)
-                
-                self.log_audit(f"Decrypted to: {out_path}", "SUCCESS")
-                self.notify("Decryption Successful")
-            except binascii.Error:
-                self.notify("Invalid IV Hex String", severity="error")
-            except Exception as e:
-                self.log_audit(f"Dec Error: {e}", "ERROR")
-                self.notify("Decryption Failed", severity="error")
+            if symmetric and fpath and kpath:
+                try:
+                    # Chamada atualizada: Removemos o argumento IV.
+                    # Assume-se que a função decrypt agora lê o IV de dentro do fpath
+                    out = symmetric.decrypt(fpath, "aes512", kpath)
+                    
+                    self.log_audit(f"Decrypted to {out}", "SUCCESS")
+                    self.notify("Decryption Done")
+                except Exception as e: 
+                    self.log_audit(f"Dec Error: {e}", "ERROR")
+                    self.notify("Failed to Decrypt", severity="error")
 
 # --- APP CONFIGURATION ---
 class CryptoVaultApp(App):
     CSS = CSS
     SCREENS = {"login": LoginScreen, "main": MainScreen}
-    BINDINGS = [("q", "quit", "Quit App"), ("d", "toggle_dark", "Toggle Dark Mode")]
-    
+    BINDINGS = [("q", "quit", "Quit"), ("d", "toggle_dark", "Dark Mode")]
     user = None 
 
     def on_mount(self) -> None:
