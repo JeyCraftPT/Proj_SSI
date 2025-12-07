@@ -45,7 +45,7 @@ class FilePickerScreen(ModalScreen[str]):
 class LoginScreen(Screen):
     def compose(self) -> ComposeResult:
         with Container(id="login-container"):
-            yield Label("CRYPTO VAULT SYSTEM", id="login-title")
+            yield Label("RightHereWaiting", id="login-title")
             with TabbedContent(initial="tab-login"):
                 with TabPane("Login", id="tab-login"):
                     yield Label("Username")
@@ -410,7 +410,7 @@ class MainScreen(Screen):
 
 
 # --- MAIN APP ---
-class CryptoVaultApp(App):
+class RightHereWaitingApp(App):
     CSS = CSS
     SCREENS = {"login": LoginScreen, "main": MainScreen}
     BINDINGS = [("q", "quit", "Quit"), ("d", "toggle_dark", "Dark Mode")]
