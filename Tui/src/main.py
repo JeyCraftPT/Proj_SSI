@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal
+from textual.containers import Container, Horizontal, Vertical
 from textual.screen import Screen, ModalScreen
 from textual.widgets import (
     Header, Footer, Button, Input, Label, TabbedContent, TabPane, 
@@ -91,6 +91,7 @@ DirectoryTree {
     width: 40%;
 }
 
+/* INPUTS BLOQUEADOS (READ-ONLY) */
 Input:disabled {
     opacity: 100%;
     color: $text;
@@ -105,13 +106,13 @@ Input:disabled {
 }
 
 .action-btn {
-    width: 20%;
+    width: 25%;
     margin-top: 1;
-    margin-bottom: 2;
+    margin-bottom: 1;
 }
 
 .separator {
-    margin-top: 2;
+    margin-top: 1;
     margin-bottom: 1;
     color: $accent;
     text-style: bold;
@@ -122,7 +123,63 @@ Input:disabled {
     margin-bottom: 1;
     margin-left: 0;
     margin-top: 1;
-}  
+}
+
+.split-view {
+    height: auto;
+    width: 100%;
+}
+
+.half-column {
+    width: 1fr;       
+    height: auto;
+    padding: 0 1;     
+    border-left: solid $secondary; 
+}
+
+.half-column:first-child {
+    border-left: none; 
+}
+
+.half-column .file-input {
+    width: 75%;      
+}
+
+.half-column .btn-browse {
+    width: 20%;
+    min-width: 5;
+    margin-left: 1;
+}
+
+.half-column .input-group {
+    width: 100%;
+    align: left middle; /* Alinhamento importante */
+}
+
+.section-title {
+    text-align: center;
+    background: $secondary;
+    color: $text;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+/* --- ESTILO ESPECÍFICO PARA A ABA HMAC (Colunas) --- */
+.half-column .file-input {
+    width: 1fr; 
+}
+
+.half-column .btn-browse {
+    width: 8;       
+    min-width: 8;
+    margin-left: 1;
+}
+
+.half-column .input-group {
+    width: 100%;
+    align: left middle; 
+}
+/* -------------------------------------------------- */
 """
 
 # --- FILE PICKER SCREEN (MODAL) ---
@@ -150,7 +207,7 @@ class LoginScreen(Screen):
             with TabbedContent(initial="tab-login"):
                 with TabPane("Login", id="tab-login"):
                     yield Label("Username")
-                    yield Input(placeholder="Existing username", id="login_user")
+                    yield Input(placeholder="Username", id="login_user")
                     yield Label("Password")
                     yield Input(placeholder="Password", password=True, id="login_pass")
                     yield Button("Sign In", variant="primary", id="btn-login", classes="action-btn")
@@ -208,7 +265,13 @@ class MainScreen(Screen):
         
         # Decryption
         "browse-dec-file": "decrypt-file-input",
-        "browse-dec-key": "decrypt-key-input"
+        "browse-dec-key": "decrypt-key-input",
+
+        # HMAC
+        "browse-hmac-calc-file": "hmac-calc-file-input",
+        "browse-hmac-calc-key": "hmac-calc-key-input",
+        "browse-hmac-verify-file": "hmac-verify-file-input",
+        "browse-hmac-verify-key": "hmac-verify-key-input",
     }
 
     def compose(self) -> ComposeResult:
@@ -228,7 +291,7 @@ class MainScreen(Screen):
                         yield Input(placeholder="Use button ->", id="lamport-file-input", classes="file-input", disabled=True)
                         yield Button("📂", id="browse-lamport-file", classes="btn-browse")
                     
-                    yield Label("Private Key Path:")
+                    yield Label("Private Key Path (Will be destroyed):")
                     with Horizontal(classes="input-group"):
                         yield Input(placeholder="Use button ->", id="lamport-priv-input", classes="file-input", disabled=True)
                         yield Button("📂", id="browse-lamport-priv", classes="btn-browse")
@@ -254,22 +317,24 @@ class MainScreen(Screen):
                     yield Button("Verify Signature", id="btn-lamport-verify", variant="success", classes="action-btn")
 
             # --- TAB 2: ENCRYPTION ---
-            with TabPane("Encryption (AES/ChaCha)"):
+            with TabPane("Encryption"):
                 with Container():
                     yield Label("Select Algorithm:")
-                    yield Select([("AES-512-CBC", "aes512"), ("ChaCha20-Poly1305", "chacha20")], allow_blank=False, value="aes512", id="algo-select", classes="btn-select")
+                    yield Select([
+                        ("AES-256-CBC", "aes256"), 
+                        ("ChaCha20-Poly1305", "chacha20")
+                    ], allow_blank=False, value="aes256", id="algo-select", classes="btn-select")
                     
                     yield Label("File to Encrypt:")
                     with Horizontal(classes="input-group"):
                         yield Input(placeholder="Use button ->", id="encrypt-file-input", classes="file-input", disabled=True)
                         yield Button("📂", id="browse-enc-file", classes="btn-browse")
                     
-                    yield Button("Encrypt File & Gen Key", id="btn-encrypt", variant="primary", classes="action-btn")
+                    yield Button("Encrypt & Gen Key", id="btn-encrypt", variant="primary", classes="action-btn")
                     
                     yield Label("Output Key File:", id="key-output-label")
                     yield Input(id="key-output-display", disabled=True, classes="file-input") 
                     
-                    # --- ALTERADO: Mostra o ficheiro encriptado em vez do IV ---
                     yield Label("Output Encrypted File:")
                     yield Input(id="enc-output-display", disabled=True, classes="file-input")
 
@@ -285,11 +350,61 @@ class MainScreen(Screen):
                     with Horizontal(classes="input-group"):
                         yield Input(placeholder="Use button ->", id="decrypt-key-input", classes="file-input", disabled=True)
                         yield Button("📂", id="browse-dec-key", classes="btn-browse")
-
-                    # --- REMOVIDO: Campo de IV ---
-                    # Assumimos que o IV é extraído automaticamente do ficheiro .enc
                     
                     yield Button("Decrypt & Verify HMAC", id="btn-decrypt", variant="success", classes="action-btn")
+
+            # --- TAB 4: HMAC INTEGRITY ---
+            with TabPane("HMAC Integrity"):
+                with Container():
+                    yield Label("Select Hash Algorithm:")
+                    yield Select([
+                        ("SHA-512", "SHA512"), 
+                        ("SHA-256", "SHA256")
+                    ], allow_blank=False, value="SHA512", id="hmac-algo-select", classes="btn-select")
+
+                    # --- DIVISÃO LADO A LADO ---
+                    with Horizontal(classes="split-view"):
+                        
+                        # === COLUNA ESQUERDA: CALCULATE ===
+                        with Vertical(classes="half-column"):
+                            yield Label("1. Calculate HMAC", classes="section-title")
+                            
+                            yield Label("File to Hash:")
+                            with Horizontal(classes="input-group"):
+                                yield Input(placeholder="File...", id="hmac-calc-file-input", classes="file-input", disabled=True)
+                                yield Button("📂", id="browse-hmac-calc-file", classes="btn-browse")
+
+                            yield Label("Key File:")
+                            with Horizontal(classes="input-group"):
+                                yield Input(placeholder="Key...", id="hmac-calc-key-input", classes="file-input", disabled=True)
+                                yield Button("📂", id="browse-hmac-calc-key", classes="btn-browse")
+
+                            yield Button("Calculate HMAC", id="btn-hmac-calc", variant="warning", classes="action-btn")
+
+                            yield Label("Result (Hex):")
+                            yield Input(id="hmac-output-display", classes="file-input", disabled=True)
+
+
+                        # === COLUNA DIREITA: VERIFY ===
+                        with Vertical(classes="half-column"):
+                            yield Label("2. Verify HMAC", classes="section-title")
+
+                            yield Label("File to Verify:")
+                            with Horizontal(classes="input-group"):
+                                yield Input(placeholder="File...", id="hmac-verify-file-input", classes="file-input", disabled=True)
+                                yield Button("📂", id="browse-hmac-verify-file", classes="btn-browse")
+
+                            yield Label("Key File:")
+                            with Horizontal(classes="input-group"):
+                                yield Input(placeholder="Key...", id="hmac-verify-key-input", classes="file-input", disabled=True)
+                                yield Button("📂", id="browse-hmac-verify-key", classes="btn-browse")
+
+                            yield Label("Expected HMAC:")
+                            # Input livre para colar o Hash
+                            yield Input(placeholder="Paste Hex...", id="hmac-verify-hex-input", classes="file-input")
+
+                            yield Button("Verify HMAC", id="btn-hmac-verify", variant="success", classes="action-btn")
+
 
         yield Log(id="audit-log", highlight=True)
         yield Footer()
@@ -336,7 +451,15 @@ class MainScreen(Screen):
                     sig_json = LamportSigner.sign(fpath, kpath)
                     with open(fpath + ".sig", "w") as f: f.write(sig_json)
                     self.log_audit(f"Signed: {fpath}", "SUCCESS")
-                    self.notify("File Signed")
+                    
+                    try:
+                        os.remove(kpath)
+                        self.log_audit(f"Private Key Destroyed: {kpath}", "SECURITY")
+                        self.query_one("#lamport-priv-input").value = "" 
+                    except OSError as e:
+                        self.log_audit(f"Failed to destroy key: {e}", "WARNING")
+
+                    self.notify("File Signed & Key Destroyed")
                 except Exception as e: self.log_audit(f"Sign Error: {e}", "ERROR")
 
         elif btn_id == "btn-lamport-verify":
@@ -355,42 +478,73 @@ class MainScreen(Screen):
                         self.notify("Invalid Signature", severity="error")
                 except Exception as e: self.log_audit(f"Verify Error: {e}", "ERROR")
 
-        # --- ENCRYPTION LOGIC UPDATED ---
+        # --- ENCRYPTION ---
         elif btn_id == "btn-encrypt":
             fpath = self.query_one("#encrypt-file-input").value
             algo = self.query_one("#algo-select").value
             if symmetric and fpath:
                 try:
                     key_path = symmetric.keygen(user)
-                    
-                    # Assume-se que o backend insere o IV no ficheiro de output
                     out_path, iv = symmetric.encrypt(fpath, algo, key_path)
                     
-                    self.query_one("#key-output-display").value = key_path
+                    if hashing:
+                        hmac_val = hashing.calculate_hmac(out_path, key_path)
+                        self.log_audit(f"Auto-HMAC (SHA512): {hmac_val[:16]}...", "INTEGRITY")
                     
-                    # Atualiza o novo campo com o ficheiro de output
+                    self.query_one("#key-output-display").value = key_path
                     self.query_one("#enc-output-display").value = out_path 
                     
-                    self.log_audit(f"Encrypted: {out_path}", "SUCCESS")
+                    self.log_audit(f"Encrypted ({algo}): {out_path}", "SUCCESS")
                     self.notify("Encryption Done")
                 except Exception as e: self.log_audit(f"Enc Error: {e}", "ERROR")
 
-        # --- DECRYPTION LOGIC UPDATED ---
+        # --- DECRYPTION ---
         elif btn_id == "btn-decrypt":
             fpath = self.query_one("#decrypt-file-input").value
             kpath = self.query_one("#decrypt-key-input").value
-            
             if symmetric and fpath and kpath:
                 try:
-                    # Chamada atualizada: Removemos o argumento IV.
-                    # Assume-se que a função decrypt agora lê o IV de dentro do fpath
-                    out = symmetric.decrypt(fpath, "aes512", kpath)
-                    
+                    out = symmetric.decrypt(fpath, "aes256", kpath)
                     self.log_audit(f"Decrypted to {out}", "SUCCESS")
                     self.notify("Decryption Done")
                 except Exception as e: 
                     self.log_audit(f"Dec Error: {e}", "ERROR")
                     self.notify("Failed to Decrypt", severity="error")
+
+        # --- HMAC HANDLERS ---
+        elif btn_id == "btn-hmac-calc":
+            fpath = self.query_one("#hmac-calc-file-input").value
+            kpath = self.query_one("#hmac-calc-key-input").value
+            algo_hash = self.query_one("#hmac-algo-select").value
+            
+            if hashing and fpath and kpath:
+                try:
+                    if algo_hash == "SHA256":
+                        self.log_audit("Backend currently defaults to SHA512", "WARNING")
+                    
+                    digest = hashing.calculate_hmac(fpath, kpath)
+                    self.query_one("#hmac-output-display").value = digest
+                    self.log_audit(f"HMAC ({algo_hash}) Calculated: {digest[:16]}...", "SUCCESS")
+                    self.notify("HMAC Calculated")
+                except Exception as e:
+                    self.log_audit(f"HMAC Error: {e}", "ERROR")
+
+        elif btn_id == "btn-hmac-verify":
+            fpath = self.query_one("#hmac-verify-file-input").value
+            kpath = self.query_one("#hmac-verify-key-input").value
+            expected_hex = self.query_one("#hmac-verify-hex-input").value
+            
+            if hashing and fpath and kpath and expected_hex:
+                try:
+                    is_valid = hashing.verify_hmac(fpath, kpath, expected_hex)
+                    if is_valid:
+                        self.log_audit("HMAC Verification: MATCH", "SUCCESS")
+                        self.notify("Integrity Verified!", severity="success")
+                    else:
+                        self.log_audit("HMAC Verification: MISMATCH", "WARNING")
+                        self.notify("Integrity Check FAILED!", severity="error")
+                except Exception as e:
+                    self.log_audit(f"HMAC Verify Error: {e}", "ERROR")
 
 # --- APP CONFIGURATION ---
 class CryptoVaultApp(App):
