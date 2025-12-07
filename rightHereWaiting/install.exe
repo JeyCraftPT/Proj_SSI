@@ -14,5 +14,5 @@ pip install -r req.txt
 
 # Para executar:
 # No powershell: start python -ArgumentList "-m src.main"
-# No Linux: gnome-terminal -- python3 -m src.main
+# No Linux:  python3 -m src.main
 # Caso nenhum destes funcione pode apenas fazer: python -m src.main
