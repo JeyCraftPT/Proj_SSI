@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Nome do ambiente virtual
+ENV_DIR="."
+
+# Criar o ambiente virtual
+python3 -m venv $ENV_DIR
+
+# Ativar o ambiente virtual
+source bin/activate
+
+# Instalar dependências do req.txt
+pip install -r req.txt
+
+# Para executar:
+# No powershell: start python -ArgumentList "-m src.main"
+# No Linux: gnome-terminal -- python3 -m src.main
+# Caso nenhum destes funcione pode apenas fazer: python -m src.main

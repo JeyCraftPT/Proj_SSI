@@ -1,0 +1,151 @@
+Screen {
+    align: center middle;
+    background: $surface-darken-1;
+    padding: 1 2;
+}
+
+#login-container {
+    width: 60;
+    height: auto;
+    border: solid $accent;
+    background: $surface;
+    padding: 2;
+}
+
+#login-title {
+    text-align: center;
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 2;
+}
+
+#audit-log {
+    height: 30%;
+    border-top: solid $secondary;
+    background: $surface-darken-2;
+    color: $text-muted;
+}
+
+FilePickerScreen {
+    align: center middle;
+    background: rgba(0,0,0,0.7);
+}
+
+#dialog {
+    width: 80%;
+    height: 80%;
+    border: solid $accent;
+    background: $surface;
+    layout: vertical;
+}
+
+#dialog-title {
+    text-align: center;
+    background: $accent;
+    color: $text;
+    padding: 1;
+    width: 100%;
+}
+
+DirectoryTree {
+    height: 1fr;
+    border-top: solid $secondary;
+    border-bottom: solid $secondary;
+}
+
+.input-group {
+    height: auto;
+    margin-bottom: 1;
+    align: left middle;
+}
+
+.file-input {
+    width: 40%;
+}
+
+Input:disabled {
+    opacity: 100%;
+    color: $text;
+    background: $surface-darken-1;
+    border: wide $secondary;
+}
+
+.btn-browse {
+    width: 5%;
+    min-width: 10; 
+    margin-left: 1;
+}
+
+.action-btn {
+    width: 25%;
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+.separator {
+    margin-top: 1;
+    margin-bottom: 1;
+    color: $accent;
+    text-style: bold;
+}
+
+.btn-select {
+    width: 40%;
+    margin-bottom: 1;
+    margin-left: 0;
+    margin-top: 1;
+}
+
+.split-view {
+    height: auto;
+    width: 100%;
+}
+
+.half-column {
+    width: 1fr;       
+    height: auto;
+    padding: 0 1;     
+    border-left: solid $secondary; 
+}
+
+.half-column:first-child {
+    border-left: none; 
+}
+
+.half-column .file-input {
+    width: 75%;      
+}
+
+.half-column .btn-browse {
+    width: 20%;
+    min-width: 5;
+    margin-left: 1;
+}
+
+.half-column .input-group {
+    width: 100%;
+    align: left middle;
+}
+
+.section-title {
+    text-align: center;
+    background: $secondary;
+    color: $text;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+.half-column .file-input {
+    width: 1fr; 
+}
+
+.half-column .btn-browse {
+    width: 8;       
+    min-width: 8;
+    margin-left: 1;
+}
+
+.half-column .input-group {
+    width: 100%;
+    align: left middle; 
+}
