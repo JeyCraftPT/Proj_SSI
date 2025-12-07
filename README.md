@@ -1,86 +1,65 @@
-# Proj_SSI
+# Right Here Waiting (Proj_SSI)
 
-## Right Here Waiting
+> **Sistema de Comunicação Seguro e Pós-Quântico (TUI)**
 
-Objetivo deste consiste em desenvolver uma aplicação ou um sistema de software que permita a proteção de ficheiros, assegurando que essa proteção se mantém mesmo que apareça um computador quântico.
+![Python](https://img.shields.io/badge/Language-Python-3776AB?logo=python&logoColor=white)
+![Textual](https://img.shields.io/badge/Framework-Textual-green)
+![Security](https://img.shields.io/badge/Security-Post--Quantum-blue)
 
-# Funcionalidades do Sistema
+## Visão Geral
 
-O programa a desenvolver deverá disponibilizar ao utilizador um conjunto de funcionalidades básicas relacionadas com criptografia, integridade e assinaturas digitais, incluindo suporte para o esquema de assinaturas de Lamport.
+**Right Here Waiting** é um sistema de software desenvolvido no âmbito da unidade curricular de **Segurança de Sistemas Informáticos (SSI)**.
 
-## 1. Gestão de Chaves
+O projeto implementa uma interface de terminal moderna (TUI) para permitir a proteção de ficheiros e comunicações seguras, assegurando robustez contra a ameaça da computação quântica (**Criptografia Pós-Quântica**), utilizando algoritmos como o esquema de assinaturas de Lamport.
 
-- Gerar chaves de cifra
+## Funcionalidades
 
-  - Permite criar chaves para operações de cifrar e decifrar.
+A aplicação dispõe de uma Interface de Utilizador no Terminal (TUI) com os seguintes módulos:
 
-- Gerar chaves de assinatura digital (Lamport
+### 1. Gestão de Chaves
+* **Chaves de Cifra**: Geração de chaves simétricas.
+* **Chaves Lamport**: Geração de pares de chaves (pública/privada) resistentes a computadores quânticos.
 
-  - Criação de par de chaves pública/privada para o esquema de Lamport.
+### 2. Cifra e Decifra
+* **Cifrar Ficheiro**: Garante a confidencialidade dos dados.
+* **Decifrar Ficheiro**: Restaura o ficheiro original.
 
-- (Opcional) Suporte a múltiplos utilizadores
-  - Cada utilizador possui o seu próprio conjunto de chaves.
-  - As chaves privadas podem ser guardadas de forma segura numa base de dados.
+### 3. Assinaturas Digitais (Lamport)
+* **Assinar Ficheiro**: Criação de assinaturas digitais pós-quânticas.
+* **Verificar Assinatura**: Validação da autenticidade e origem do ficheiro.
 
-## 2. Cifra e Decifra de Ficheiros
+### 4. Integridade (MAC/HMAC)
+* **Gerar e Verificar**: Garante que o ficheiro não sofreu alterações não autorizadas.
 
-- Cifrar ficheiro
+## 📋 Pré-requisitos
 
-  - O programa solicita:
-    - Ficheiro de entrada.
-    - Chave de cifra.
-    - Ficheiro de saída.
+Para executar este projeto, necessitas de:
 
-- Decifrar ficheiro
-  - O programa solicita:
-    - Ficheiro cifrado.
-    - Chave de cifra.
-    - Ficheiro de saída.
+1.  **Python 3.8** ou superior.
+2.  **Textual**: Biblioteca para a interface gráfica no terminal.
 
-## 3. Assinaturas Digitais (Lamport)
+## Instalação
 
-- Criar assinatura
+1.  **Clonar o repositório:**
+    ```bash
+    git clone [https://github.com/JeyCraftPT/Proj_SSI.git](https://github.com/JeyCraftPT/Proj_SSI.git)
+    cd Proj_SSI
+    ```
 
-  - O programa solicita:
-    - Ficheiro a assinar.
-    - Chave privada do utilizador.
-  - Gera uma assinatura digital utilizando Lamport.
+2.  **Navegar para a diretoria do projeto:**
+    ```bash
+    cd rightHereWaiting
+    ```
 
-- **Verificar assinatura**
-  - O programa solicita:
-    - Ficheiro original.
-    - Ficheiro com a assinatura.
-    - Chave pública correspondente.
-  - Informa se a assinatura é válida ou inválida.
+3.  **Instalar dependências:**
+    O projeto utiliza o `Textual` para a interface. Instala as dependências (e outras bibliotecas criptográficas necessárias):
+    ```bash
+    pip install textual textual-dev pycryptodome
+    ```
 
-## 4. Código de Autenticação de Mensagens (MAC/HMAC)
+## Como Executar
 
-- **Gerar código de integridade**
+Para iniciar a aplicação TUI, certifica-te de que estás dentro da pasta `rightHereWaiting` e executa o seguinte comando:
 
-  - Criação de um código que assegura a integridade e autenticidade da mensagem ou ficheiro.
-
-- **Verificar código de integridade**
-  - O programa solicita:
-    - Ficheiro de origem.
-    - Código de autenticação.
-    - Chave associada.
-  - Valida se o ficheiro sofreu alterações.
-
-## 5. Interface de Utilização
-
-- **Interativo e amigável**
-
-  - Ao abrir o programa, apresenta-se um menu com as opções, como:
-    1. Gerar chave de cifra
-    2. Gerar chave de assinatura (Lamport)
-    3. Cifrar ficheiro
-    4. Decifrar ficheiro
-    5. Assinar ficheiro
-    6. Verificar assinatura
-    7. Criar código de autenticação
-    8. Verificar código de autenticação
-    9. Sair
-
-- **Fluxo orientado**
-
-  - Após escolher uma opção, o programa guia o utilizador passo a passo até ao resultado final.
+```bash
+python -m src.main
