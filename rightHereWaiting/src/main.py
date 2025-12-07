@@ -1,5 +1,5 @@
-from src.frontend.ui import CryptoVaultApp
+from src.frontend.ui import RightHereWaitingApp
 
 if __name__ == "__main__":
-    app = CryptoVaultApp()
+    app = RightHereWaitingApp()
     app.run()
