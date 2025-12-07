@@ -351,7 +351,7 @@ class MainScreen(Screen):
                         yield Input(placeholder="Use button ->", id="decrypt-key-input", classes="file-input", disabled=True)
                         yield Button("📂", id="browse-dec-key", classes="btn-browse")
                     
-                    yield Button("Decrypt & Verify HMAC", id="btn-decrypt", variant="success", classes="action-btn")
+                    yield Button("Decrypt", id="btn-decrypt", variant="success", classes="action-btn")
 
             # --- TAB 4: HMAC INTEGRITY ---
             with TabPane("HMAC Integrity"):
@@ -379,9 +379,10 @@ class MainScreen(Screen):
                                 yield Input(placeholder="Key...", id="hmac-calc-key-input", classes="file-input", disabled=True)
                                 yield Button("📂", id="browse-hmac-calc-key", classes="btn-browse")
 
-                            yield Button("Calculate HMAC", id="btn-hmac-calc", variant="warning", classes="action-btn")
+                            yield Button("Calculate & Save HMAC", id="btn-hmac-calc", variant="warning", classes="action-btn")
 
-                            yield Label("Result (Hex):")
+                            # --- MUDANÇA: Label e Input para o Caminho do Ficheiro ---
+                            yield Label("Output HMAC File (.hmac):")
                             yield Input(id="hmac-output-display", classes="file-input", disabled=True)
 
 
@@ -399,9 +400,11 @@ class MainScreen(Screen):
                                 yield Input(placeholder="Key...", id="hmac-verify-key-input", classes="file-input", disabled=True)
                                 yield Button("📂", id="browse-hmac-verify-key", classes="btn-browse")
 
-                            yield Label("Expected HMAC:")
-                            # Input livre para colar o Hash
-                            yield Input(placeholder="Paste Hex...", id="hmac-verify-hex-input", classes="file-input")
+                            # --- MUDANÇA: Agora seleciona o ficheiro .hmac ---
+                            yield Label("HMAC File (.hmac):")
+                            with Horizontal(classes="input-group"):
+                                yield Input(placeholder="Select .hmac file...", id="hmac-verify-filepath-input", classes="file-input", disabled=True)
+                                yield Button("📂", id="browse-hmac-verify-filepath", classes="btn-browse")
 
                             yield Button("Verify HMAC", id="btn-hmac-verify", variant="success", classes="action-btn")
 
@@ -522,20 +525,36 @@ class MainScreen(Screen):
                     if algo_hash == "SHA256":
                         self.log_audit("Backend currently defaults to SHA512", "WARNING")
                     
+                    # 1. Calcula o Hash
                     digest = hashing.calculate_hmac(fpath, kpath)
-                    self.query_one("#hmac-output-display").value = digest
-                    self.log_audit(f"HMAC ({algo_hash}) Calculated: {digest[:16]}...", "SUCCESS")
-                    self.notify("HMAC Calculated")
+                    
+                    # 2. Cria o caminho do ficheiro de saída
+                    hmac_out_path = fpath + ".hmac"
+                    
+                    # 3. Guarda o resultado no ficheiro
+                    with open(hmac_out_path, "w") as f:
+                        f.write(digest)
+                        
+                    # 4. Atualiza a UI
+                    self.query_one("#hmac-output-display").value = hmac_out_path
+                    self.log_audit(f"HMAC Saved: {hmac_out_path}", "SUCCESS")
+                    self.notify("HMAC Saved to file")
                 except Exception as e:
                     self.log_audit(f"HMAC Error: {e}", "ERROR")
 
         elif btn_id == "btn-hmac-verify":
             fpath = self.query_one("#hmac-verify-file-input").value
             kpath = self.query_one("#hmac-verify-key-input").value
-            expected_hex = self.query_one("#hmac-verify-hex-input").value
+            # Agora lemos o caminho do ficheiro .hmac
+            hmac_file_path = self.query_one("#hmac-verify-filepath-input").value
             
-            if hashing and fpath and kpath and expected_hex:
+            if hashing and fpath and kpath and hmac_file_path:
                 try:
+                    # 1. Lê o hash esperado do ficheiro
+                    with open(hmac_file_path, "r") as f:
+                        expected_hex = f.read().strip()
+                    
+                    # 2. Verifica
                     is_valid = hashing.verify_hmac(fpath, kpath, expected_hex)
                     if is_valid:
                         self.log_audit("HMAC Verification: MATCH", "SUCCESS")
