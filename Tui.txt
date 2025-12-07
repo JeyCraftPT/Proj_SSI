@@ -3,3 +3,7 @@ entrar na pasta Tui
 dar pip install ao que está na pasta req.txt
 e fazer python -m src.main
 functiona para mim e para o pedro
+
+
+Assinaturas Digitais Esquema Lamport: 
+https://www.researchgate.net/figure/Figura-21-Exemplo-do-esquema-de-assinatura-one-time-de-Lamport_fig1_302027947
